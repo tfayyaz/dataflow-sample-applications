@@ -103,3 +103,18 @@ For example:
 ```
 python MLPipelineExamples/test_pipelines/batch_inference.py --saved_model_location=<PIPELINE_ROOT>/serving_model_dir --tfrecord_folder=/<your-directory>/simple-data/data/*
 ```
+
+# Using Kubeflow Pipelines
+```
+tfx pipeline create  --pipeline-path=kfp_timeseries_local_sin_wave.py --endpoint=${ENDPOINT} --build-target-image=${CUSTOM_TFX_IMAGE}
+```
+
+```
+tfx run create --pipeline-name={PIPELINE_NAME} --endpoint=${ENDPOINT}
+```
+
+```
+tfx pipeline update  --pipeline-path=kfp_timeseries_local_sin_wave.py --endpoint=${ENDPOINT}
+```
+
+

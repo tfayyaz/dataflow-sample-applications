@@ -14,8 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-PIPELINE_ROOT = './build'
-DATA_ROOT = '/tmp'
+
+import os
+
+PIPELINE_ROOT = ''
+
+DATA_ROOT = ''
 
 PIPELINE_NAME = 'synthetic_data_sin_wave_pipeline'
 
@@ -23,10 +27,10 @@ GCS_BUCKET_NAME = ''
 
 PROJECT_ID = ''
 
-GCP_REGION = ''
+GCP_REGION = 'us-west1'
 
 GCP_AI_PLATFORM_SERVING_ARGS = {
-        'model_name': 'my_pipeline',
+        'model_name': f'{PIPELINE_NAME}',
         'project_id': f'{PROJECT_ID}',
         'regions': [f'{GCP_REGION}'],
 }
@@ -41,7 +45,9 @@ GCP_AI_PLATFORM_TRAINING_ARGS = {
 
 GCP_DATAFLOW_ARGS = [
         '--runner=DataflowRunner',
-        f'--project_id={PROJECT_ID}'
+        f'--project={PROJECT_ID}',
+        f'--region={GCP_REGION}',
+        '--temp_location=' + os.path.join('gs://', GCS_BUCKET_NAME, 'tmp')
 ]
 
 SYNTHETIC_DATASET = {
