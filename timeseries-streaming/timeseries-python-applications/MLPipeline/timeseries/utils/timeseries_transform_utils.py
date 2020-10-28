@@ -62,6 +62,9 @@ def create_feature_list_from_dict(
     # Discard features not required in the model
     model_features = {k: features[k] for k in features if k in feature_list}
 
+    # Convert to dense
+    model_features = {k: tf.sparse.to_dense(features[k]) for k in model_features}
+
     if config['enable_timestamp_features']:
         timestamp_feature_list = [
                 k for k in model_features if k.endswith('_TIMESTAMP')
@@ -73,7 +76,7 @@ def create_feature_list_from_dict(
         }
 
         timestamp_features = [
-                create_time_coordinate_features((k, features[k]), config)
+                create_time_coordinate_features((k, tf.sparse.to_dense(features[k])), config)
                 for k in timestamp_feature_list if k.endswith('_TIMESTAMP')
         ]
 

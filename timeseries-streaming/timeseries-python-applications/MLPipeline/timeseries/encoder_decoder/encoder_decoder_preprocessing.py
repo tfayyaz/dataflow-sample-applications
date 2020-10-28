@@ -37,19 +37,17 @@ def preprocessing_fn(inputs: Dict[Text, Any],
     timesteps = custom_config['timesteps']
 
     outputs = inputs.copy()
-    for key in outputs:
-        outputs[key] = tf.sparse.to_dense(outputs[key])
-    """
-    Scale the inputs with the exception of TIMESTAMPS
-    """
-    for key in outputs:
-        if not str(key).endswith('_TIMESTAMP') and not str(key).startswith(
-                'METADATA_'):
-            outputs[key] = tft.scale_to_z_score(outputs[key])
 
     # Generate features to be used in the model
     train_x_tensors = timeseries_transform_utils.create_feature_list_from_dict(
             outputs, custom_config)
+
+    """
+    Scale the inputs with the exception of TIMESTAMPS
+    """
+    for key in train_x_tensors:
+        if not str(key).endswith('-TIMESTAMP'):
+            train_x_tensors[key] = tft.scale_to_z_score(train_x_tensors[key])
 
     #TODO add check that we have found values.
 

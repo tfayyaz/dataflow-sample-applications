@@ -84,7 +84,7 @@ class BeamImplTest(tft_unit.TransformTestCase):
         }
 
         input_data = [{
-                'a': [1000.0, 2000.0, 3000.0], 'b': [3000.0, 2000.0, 1000.0]
+                'a': [1000.0, 2000.0, 3000.0], 'b': [3000, 2000, 1000]
         }]
         input_metadata = tft_unit.metadata_from_feature_spec({
                 'a': tf.io.VarLenFeature(tf.float32),
