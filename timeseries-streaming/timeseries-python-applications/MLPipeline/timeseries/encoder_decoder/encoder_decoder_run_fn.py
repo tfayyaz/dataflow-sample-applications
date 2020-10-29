@@ -106,12 +106,15 @@ def run_fn(fn_args: TrainerFnArgs):
 
     steps_per_epoch = fn_args.training_example_count / fn_args.train_batches
 
+    tensorboard_callback = tf.keras.callbacks.TensorBoard()
+
     model.fit(
             train_dataset,
             epochs=int(fn_args.train_steps / steps_per_epoch),
             steps_per_epoch=steps_per_epoch,
             validation_data=eval_dataset,
-            validation_steps=fn_args.eval_steps)
+            validation_steps=fn_args.eval_steps,
+            callbacks=[tensorboard_callback])
 
     signatures = {
             'serving_default': _get_serve_tf_examples_fn(
