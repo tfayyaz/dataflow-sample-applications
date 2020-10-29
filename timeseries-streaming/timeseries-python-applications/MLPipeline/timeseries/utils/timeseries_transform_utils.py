@@ -41,7 +41,7 @@ def create_feature_list_from_list(features: [Text],
         for k in feature_list:
             if k.endswith('_TIMESTAMP'):
                 time_feature = create_time_coordinate_features_names(
-                        k, config=config)
+                    k, config=config)
                 time_features.extend(time_feature)
                 # Remove the original value from the list
                 model_features.remove(k)
@@ -67,17 +67,17 @@ def create_feature_list_from_dict(
 
     if config['enable_timestamp_features']:
         timestamp_feature_list = [
-                k for k in model_features if k.endswith('_TIMESTAMP')
+            k for k in model_features if k.endswith('_TIMESTAMP')
         ]
         model_features = {
-                k: v
-                for k,
+            k: v
+            for k,
                 v in model_features.items() if not k.endswith('_TIMESTAMP')
         }
 
         timestamp_features = [
-                create_time_coordinate_features((k, tf.sparse.to_dense(features[k])), config)
-                for k in timestamp_feature_list if k.endswith('_TIMESTAMP')
+            create_time_coordinate_features((k, tf.sparse.to_dense(features[k])), config)
+            for k in timestamp_feature_list if k.endswith('_TIMESTAMP')
         ]
 
         for k in timestamp_features:
@@ -97,7 +97,7 @@ def create_time_coordinate_features_names(
     if not set(requested_time_features).issubset(
             ['MINUTE', 'HOUR', 'DAY', 'MONTH', 'YEAR']):
         raise ValueError(
-                f'Only MINUTE HOUR DAY YEAR are supported not {requested_time_features}'
+            f'Only MINUTE HOUR DAY YEAR are supported not {requested_time_features}'
         )
 
     feature_name = removesuffix(feature, '_TIMESTAMP')
@@ -115,11 +115,11 @@ def create_time_coordinate_features(
     For any timeseries feature, return sin and cos features to the resolution dictated via 'time_features'.
     """
     cos_sin_feature = create_time_coordinate_features_names(
-            feature=features[0], config=config)
+        feature=features[0], config=config)
 
     return {
-            k: tf.cast(create_time_coordinate(k, features[1]), tf.float32)
-            for k in cos_sin_feature
+        k: tf.cast(create_time_coordinate(k, features[1]), tf.float32)
+        for k in cos_sin_feature
     }
 
 
@@ -170,3 +170,13 @@ def removesuffix(self: str, suffix: str) -> str:
         return self[:-len(suffix)]
     else:
         return self[:]
+
+
+def print_feature_pos(config: Dict[Text, Any]):
+    """
+    Utility to show the position of features from the config file.
+    Note if a feature is missing from the source data this will not be == to the features used tfx pipeline.
+    """
+    features = create_feature_list_from_list(config=config, features=config['features'])
+    for i in range(len(features)):
+        print(f'Feature pos {i} is {features[i]}')

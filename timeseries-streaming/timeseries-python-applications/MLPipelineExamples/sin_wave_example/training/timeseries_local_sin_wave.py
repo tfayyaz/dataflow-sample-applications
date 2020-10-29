@@ -24,12 +24,17 @@ from tfx.orchestration import metadata
 from absl import logging
 
 import MLPipelineExamples.sin_wave_example.config as config
+from timeseries.utils import timeseries_transform_utils
+
 
 def run():
     """
     The sample data produced by the Java pipeline has 42K examples.
     The data is a simple repeating sin-wave.
     """
+
+    # Print map of features that will be generated.
+    timeseries_transform_utils.print_feature_pos(config=config.MODEL_CONFIG)
 
     tfx_pipeline = pipeline.create_pipeline(
             pipeline_name=config.PIPELINE_NAME,
