@@ -99,12 +99,11 @@ def create_pipeline(
     }
 
     if ai_platform_training_args is not None:
+        trainer_custom_config[ai_platform_trainer_executor.TRAINING_ARGS_KEY] = ai_platform_training_args
         trainer_args.update({
                 'custom_executor_spec': executor_spec.ExecutorClassSpec(
                         ai_platform_trainer_executor.GenericExecutor),
-                'custom_config': {
-                        ai_platform_trainer_executor.TRAINING_ARGS_KEY: ai_platform_training_args,
-                }
+                'custom_config': trainer_custom_config
         })
     trainer = Trainer(**trainer_args)
     components.append(trainer)
