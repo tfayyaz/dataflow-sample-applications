@@ -222,7 +222,10 @@ public class GenerateComputationTest {
                         TypeDescriptors.kvs(
                             TypeDescriptor.of(TSKey.class), TypeDescriptor.of(TSAccum.class)))
                     .<KV<TSKey, TSAccum>>via(
-                        x -> KV.of(x.getKey(), x.getValue().toBuilder().clearDataStore().build())))
+                        x ->
+                            KV.of(
+                                x.getKey(),
+                                x.getValue().toBuilder().clearDataStore().clearMetadata().build())))
             .apply(
                 ConvertAccumToSequence.builder()
                     .setWindow(Window.into(FixedWindows.of(Duration.standardSeconds(30))))

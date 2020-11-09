@@ -24,6 +24,7 @@ import com.google.dataflow.sample.timeseriesflow.TimeSeriesData.TSAccumSequence;
 import com.google.dataflow.sample.timeseriesflow.TimeSeriesData.TSDataPoint;
 import com.google.dataflow.sample.timeseriesflow.TimeSeriesData.TSKey;
 import com.google.dataflow.sample.timeseriesflow.TimeseriesStreamingOptions;
+import com.google.dataflow.sample.timeseriesflow.combiners.typeone.TSBaseCombiner;
 import com.google.dataflow.sample.timeseriesflow.common.CommonUtils;
 import com.google.dataflow.sample.timeseriesflow.common.TupleTypes;
 import com.google.dataflow.sample.timeseriesflow.verifier.TSDataPointVerifier;
@@ -95,6 +96,8 @@ public abstract class GenerateComputations
 
   abstract List<CombineFn<TSDataPoint, TSAccum, TSAccum>> type1NumericComputations();
 
+  public @Nullable abstract List<CreateCompositeTSAccum> type1KeyMerge();
+
   public @Nullable abstract List<
           PTransform<PCollection<KV<TSKey, TSAccumSequence>>, PCollection<KV<TSKey, TSAccum>>>>
       type2NumericComputations();
@@ -124,6 +127,8 @@ public abstract class GenerateComputations
 
     public abstract Builder setType1NumericComputations(
         List<CombineFn<TSDataPoint, TSAccum, TSAccum>> value);
+
+    public abstract Builder setType1KeyMerge(List<CreateCompositeTSAccum> value);
 
     public @Nullable abstract Builder setType2NumericComputations(
         List<PTransform<PCollection<KV<TSKey, TSAccumSequence>>, PCollection<KV<TSKey, TSAccum>>>>
@@ -243,12 +248,27 @@ public abstract class GenerateComputations
             .apply(Reify.windowsInValue())
             .apply(ParDo.of(new AddWindowBoundaryToTSAccum()));
 
+    // --------------- Apply key merge if any
+    if (type1KeyMerge() != null && type1KeyMerge().size() > 0) {
+
+      List<PCollection<KV<TSKey, TSAccum>>> keyMergeList = new ArrayList<>();
+
+      for (CreateCompositeTSAccum transform : type1KeyMerge()) {
+        keyMergeList.add(type1Computations.apply(transform));
+      }
+
+      type1Computations =
+          PCollectionList.of(keyMergeList).and(type1Computations).apply(Flatten.pCollections());
+    }
+
     // --------------- Compute Type 2 aggregations
 
     // **************************************************************
     // Step 5: Technical analysis are generated from the Spans of data, for example RSI and
     // loaded into the {@link TSAccumSequence} objects
     // **************************************************************
+
+    PCollection<KV<TSKey, TSAccum>> output = type1Computations;
 
     if (type2NumericComputations() != null) {
 
@@ -279,9 +299,10 @@ public abstract class GenerateComputations
               MergeAllTypeCompsInSameKeyWindow.withMergeWindow(
                   Window.into(FixedWindows.of(type1FixedWindow()))));
 
-      return mergedComputations;
+      output = mergedComputations;
     }
-    return type1Computations;
+
+    return output.apply(ParDo.of(new ClearInternalState()));
   }
 
   private static class AddWindowBoundaryToTSAccum
@@ -355,6 +376,23 @@ public abstract class GenerateComputations
             }
         }
       }
+    }
+  }
+
+  /** */
+  private static class ClearInternalState extends DoFn<KV<TSKey, TSAccum>, KV<TSKey, TSAccum>> {
+
+    @ProcessElement
+    public void process(@Element KV<TSKey, TSAccum> element, OutputReceiver<KV<TSKey, TSAccum>> o) {
+
+      o.output(
+          KV.of(
+              element.getKey(),
+              element
+                  .getValue()
+                  .toBuilder()
+                  .removeMetadata(TSBaseCombiner._BASE_COMBINER)
+                  .build()));
     }
   }
 }
